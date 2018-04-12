@@ -65,6 +65,8 @@
     <Compile Include="Libs\SharedTypes\Car.cs" />
     <Compile Include="DAO\MongoDBDriver.cs" />
     <Compile Include="Libs\HttpServer\APIHelper.cs" />
+    <Compile Include="Mediator\MediatorCtrl.cs" />
+    <Compile Include="Mediator\CarsApi.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -73,6 +75,7 @@
     <Folder Include="Libs\Confs\" />
     <Folder Include="DAO\" />
     <Folder Include="Libs\SharedTypes\" />
+    <Folder Include="Mediator\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

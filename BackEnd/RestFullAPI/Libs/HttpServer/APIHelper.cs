@@ -36,7 +36,7 @@ namespace RestFullAPI
             Parallel.ForEach(this.SignsRegex, delegate (Tuple<Regex, string, OnRequesDelegate> curr)
             {
                 if ((curr.Item1.IsMatch(request.Resource)) && 
-                    (curr.Item2 == request.Method))
+                    (curr.Item2.ToUpper() == request.Method.ToUpper()))
                 {
                     result = curr.Item3(request);
                 }
@@ -44,8 +44,8 @@ namespace RestFullAPI
 
             Parallel.ForEach(this.SignsStrings, delegate (Tuple<string, string, OnRequesDelegate> curr)
             {
-                if ((curr.Item1 == request.Resource) &&
-                    (curr.Item2 == request.Method))
+                    if ((curr.Item1.ToUpper() == request.Resource.ToUpper()) &&
+                        (curr.Item2.ToUpper() == request.Method.ToUpper()))
                 {
                     result = curr.Item3(request);
                 }
