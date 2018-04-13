@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using JsonMaker;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Driver;
@@ -53,20 +55,53 @@ namespace RestFullAPI.DAO
             ConfsCtrl.Instance.RefreshOne(this.confsChanges);
         }
 
+        private Car BsonDocumentToCar(BsonDocument doc)
+        {
+            JSON currJson = new JSON();
+            currJson.parseJson(doc.ToJson());
+            Car currCar = new Car();
+
+            if (currJson.contains("_id"))
+                currCar.id = currJson.getString("_id");
+
+            if (currJson.contains("veichle"))
+                currCar.veichle = currJson.getString("veicle");
+
+            if (currJson.contains("vendor"))
+                currCar.vendor = currJson.getString("vendor");
+
+            if (currJson.contains("year"))
+                currCar.year = currJson.getInt("vendor");
+
+            if (currJson.contains("description"))
+                currCar.description = currJson.getString("description");
+
+            if (currJson.contains("sold"))
+                currCar.sold = currJson.getBoolean("sold");
+
+            /*if (currJson.contains("createdAt"))
+                currCar.createdAt = DateTime.Parse()currJson.getDateTime("createdAt");
+
+            if (currJson.contains("updatedAt"))
+                currCar.updatedAt = currJson.getDateTime("updatedAt");*/
+
+            return currCar;
+        }
+
 
         private void confsChanges(Confs conf, VariantVar value)
         {
             switch (conf)
             {
-                case Confs.MONGODB_CARS_COLLECTION_NAME:
+                case Confs.MONGODB_HOST:
                     reconnect = true;
                     this.conf_host = value.AsString;
                     break;
-                case Confs.MONGODB_HOST:
+                case Confs.MONGODB_PORT:
                     reconnect = true;
                     this.conf_port = value.AsString;
                     break;
-                case Confs.MONGODB_PORT:
+                case Confs.MONGODB_CARS_COLLECTION_NAME:
                     reconnect = true;
                     this.conf_collection = value.AsString;
                     break;
@@ -88,45 +123,31 @@ namespace RestFullAPI.DAO
 
 
                     //prepara os campos da pesquisa
-                    JObject jm = new JObject();
-                    if (item.veichle == "")
-                        jm.Add(new JProperty("veichle", item.veichle));
-                    if (item.vendor == "")
-                        jm.Add(new JProperty("vendor", item.vendor));
-                    if (item.description == "")
-                        jm.Add(new JProperty("description", item.description));
+                    JSON jm = new JSON();
+
+                    if (item.veichle != "")
+                        jm.setString("$or[" + jm.getChildsNames("$or").Count + "].veichle", "__regexs__"+item.veichle+ "__regexe__");
+                    if (item.vendor != "")
+                        jm.setString("$or[" + jm.getChildsNames("$or").Count + "].vendor", "__regexs__" +item.vendor+ "__regexe__");
+                    if (item.description != "")
+                        jm.setString("$or[" + jm.getChildsNames("$or").Count + "].description", "__regexs__" +item.description + "__regexe__");
+                    
+
+                    string json = jm.ToJson();
+                    json = json.Replace("\"__regexs__", "/.*");
+                    json = json.Replace("__regexe__\"", "*./");
+
+                    if (!jm.contains("$or"))
+                        json = "{}";
 
 
                     //realiza a busca no banco de dados
-                    List<BsonDocument> cursor = carsCollection.Find(jm.ToJson()).ToList();
+                    List<BsonDocument> cursor = carsCollection.Find(json).ToList();
 
 
                     //converte os dados retornados do banco de dados
                     foreach (BsonDocument curr in cursor){
-                        JObject currJson = JObject.Parse(curr.ToJson());
-                        Car currCar = new Car();
-                        if (currJson.ContainsKey("veichle"))
-                            currCar.veichle = currJson.GetValue("veicle").ToString();
-                        
-                        if (currJson.ContainsKey("vendor"))
-                            currCar.vendor = currJson.GetValue("vendor").ToString();
-
-                        if (currJson.ContainsKey("year"))
-                            currCar.year = int.Parse(currJson.GetValue("vendor").ToString());
-
-                        if (currJson.ContainsKey("description"))
-                            currCar.description = currJson.GetValue("description").ToString();
-
-                        if (currJson.ContainsKey("sold"))
-                            currCar.sold = !"0false".Contains(currJson.GetValue("sold").ToString().ToLower());
-
-                        if (currJson.ContainsKey("createdAt"))
-                            currCar.createdAt = DateTime.Parse(currJson.GetValue("createdAt").ToString());
-
-                        if (currJson.ContainsKey("updatedAt"))
-                            currCar.updatedAt = DateTime.Parse(currJson.GetValue("updatedAt").ToString());
-
-                        result.Add(currCar);
+                        result.Add(BsonDocumentToCar(curr));
                     }
 
                     return new Results
@@ -141,6 +162,34 @@ namespace RestFullAPI.DAO
                 //verifica se está solicitando a população do objeto Item
                 else if (operation == DaoOperations.Populate)
                 {
+                    List<Car> result = new List<Car>();
+
+
+                    //prepara os campos da pesquisa
+                    JObject jm = new JObject();
+                    jm.Add(new JProperty("_id", item.id));
+                    //realiza a busca no banco de dados
+                    List<BsonDocument> cursor = carsCollection.Find(jm.ToJson()).ToList();
+
+                    if (cursor.Count > 0)
+                    {
+                        item = BsonDocumentToCar(cursor[0]);
+                        return new Results
+                        {
+                            sucess = true,
+                            message = "ok",
+                            data = item
+                        };
+                    }
+                    else
+                    {
+                        return new Results
+                        {
+                            sucess = false,
+                            message = "Object not found"
+                        };   
+                    }
+                    
                     
                 }
                 //verifica se está tentando inserir

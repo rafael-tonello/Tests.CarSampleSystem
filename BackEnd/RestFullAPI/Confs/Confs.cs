@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,7 +34,11 @@ namespace RestFullAPI
         DateTime confsBufferTime;
 
         //endereço do arquivo de configurações
-        string filename = "/etc/CarsSample";
+        string filename;
+
+        //a variável abaixo indica se o sistema de configurações já fez a primeira leitura do 
+        //arquivo
+        bool isStarted = false;
 
 		//Handle para a instancia única da classe
         private static ConfsCtrl instance = new ConfsCtrl();
@@ -43,6 +48,14 @@ namespace RestFullAPI
 		//de fora dela mesma
 		private ConfsCtrl ()
 		{
+            //prepara o nome do arquivo
+            filename = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/etc/CarsSample";
+
+            //cria a pasta com o arquivo, caso não exista
+            if (!Directory.Exists(Path.GetDirectoryName(filename)))
+                Directory.CreateDirectory(Path.GetDirectoryName(filename));
+
+
             //caso o arquivo não exista, cria um arquivo padrão
             if (!File.Exists(filename))
                 CreateDefaultFile();
@@ -103,7 +116,11 @@ namespace RestFullAPI
                         }
                     }
                 }
+
+                isStarted = true;
             }
+
+            releaseOne();
         }
 
         private void CreateDefaultFile()
@@ -117,10 +134,10 @@ namespace RestFullAPI
                             "MONGODB_HOST=127.0.0.1\r\n"+
                             "\r\n" +
                             "#Porta em que o servidor HTTP deverá escutar\r\n" +
-                            "MONGODB_PORT=\r\n"+
+                            "MONGODB_PORT=27017\r\n"+
                             "\r\n" +
                             "#Porta em que o servidor HTTP deverá escutar\r\n" +
-                            "MONGODB_CARS_COLLECTION_NAME=\r\n";
+                            "MONGODB_CARS_COLLECTION_NAME=CarsTest\r\n";
 
             File.WriteAllText(filename, file);
 
@@ -146,6 +163,7 @@ namespace RestFullAPI
 		//do sistema
 		public void RefreshOne(OnConfChangeDelegate _OnChange)
 		{
+            while (!isStarted) Thread.Sleep(1);
             waitOne();
             Parallel.ForEach(confsBuffer, delegate(KeyValuePair<string, VariantVar> curr){
                 _OnChange((Confs)Enum.Parse(typeof(Confs), curr.Key), curr.Value);
@@ -157,6 +175,11 @@ namespace RestFullAPI
         public void ObservateChanges(OnConfChangeDelegate _OnChange)
         {
             this.OnChange += _OnChange;
+        }
+
+        public void Initialize()
+        {
+            while (!isStarted) Thread.Sleep(1);
         }
 
 

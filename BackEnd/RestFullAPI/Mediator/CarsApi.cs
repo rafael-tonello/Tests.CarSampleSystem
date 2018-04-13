@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using JsonMaker;
+using RestFullAPI.Libs.SharedTypes;
 
 namespace RestFullAPI.Mediator
 {
@@ -31,6 +34,17 @@ namespace RestFullAPI.Mediator
         {
             HttpResponse response = new HttpResponse();
 
+            Car tempCar = new Car();
+            List<Car> allCars = (List<Car>)(pDao.OperateCar(ref tempCar, DAO.DaoOperations.Search).data);
+
+            JSON jm = new JSON();
+            int index = 0;
+            foreach (var curr in allCars)
+                jm.set("cars[" + (index++)+"]", curr.ToJson());
+
+            response.setBodyString(jm.ToJson());
+            response.setHeader("Content-Type", "application/json");
+            //convert cars to JSON
             return response;
         }
 
@@ -38,6 +52,25 @@ namespace RestFullAPI.Mediator
         {
             HttpResponse response = new HttpResponse();
 
+            string query = request.uUrlVars.ContainsKey("q") ? request.uUrlVars["q"] : "";
+
+            Car tempCar = new Car
+            {
+                veichle = query,
+                vendor = query,
+                description = query
+            };
+
+            List<Car> allCars = (List<Car>)(pDao.OperateCar(ref tempCar, DAO.DaoOperations.Search).data);
+
+            JSON jm = new JSON();
+            int index = 0;
+            foreach (var curr in allCars)
+                jm.set("cars[" + (index++) + "]", curr.ToJson());
+
+            response.setBodyString(jm.ToJson());
+            response.setHeader("Content-Type", "application/json");
+            //convert cars to JSON
             return response;
         }
 

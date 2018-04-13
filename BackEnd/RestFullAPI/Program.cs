@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using RestFullAPI.Mediator;
 
 namespace RestFullAPI
 {
@@ -7,59 +8,13 @@ namespace RestFullAPI
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            tester a = new tester();
+            ConfsCtrl.Instance.Initialize();
+            //Tests.TestMongoDB tmdb = new Tests.TestMongoDB();
+            Tests.TestCarAPI tcapi = new Tests.TestCarAPI();
 
-
+            MediatorCtrl mediator = new MediatorCtrl();
             while (true)
                 Thread.Sleep(10);
         }
-    }
-
-    class tester
-    {
-        public tester()
-        {
-            ConfsCtrl.Instance.ObservateChanges(this.confChanged);
-            ConfsCtrl.Instance.RefreshOne(this.confChanged);
-
-        }
-
-        APIHelper api;
-        private void httpLoad(int port)
-        {
-            if (api != null)
-                api.Dispose();
-
-            api = new APIHelper(port);
-            api.SignResource(@"/carros", "GET", delegate(HttpRequest request) {
-
-                return new HttpResponse();
-            });
-
-            api.SignResource(@"/carros*", "GET", delegate (HttpRequest request) {
-
-                return new HttpResponse();
-            });
-
-            api.SignResource("/pessoas", "GET", delegate (HttpRequest request) {
-
-                return new HttpResponse();
-            });
-            
-
-
-
-
-        }
-
-        private void confChanged(Confs conf, VariantVar value)
-        {
-            if (conf == Confs.API_HTTP_PORT)
-            {
-                httpLoad(value.AsInt);
-            }
-        }
-
     }
 }

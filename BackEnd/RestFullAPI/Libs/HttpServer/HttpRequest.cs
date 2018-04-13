@@ -19,9 +19,16 @@ namespace RestFullAPI
 			int index = 0;
 			foreach (var c in content)
 				this.Body[index++] = Convert.ToByte(c);
-				
-
 		}
+
+        public void setHeader(string name, string value)
+        {
+            if (!this.Headers.ContainsKey(name))
+                this.Headers.Add(name, value);
+            else
+                this.Headers[name] = value;
+                
+        }
 	}
 }
 

@@ -70,6 +70,10 @@
     <Compile Include="Mediator\MediatorCtrl.cs" />
     <Compile Include="Mediator\CarsApi.cs" />
     <Compile Include="Confs\Confs.cs" />
+    <Compile Include="Tests\TestMongoDB.cs" />
+    <Compile Include="Libs\JsonMaker\JSON.cs" />
+    <Compile Include="Libs\JsonMaker\Types\JSONObject.cs" />
+    <Compile Include="Tests\TestCarAPI.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -80,6 +84,8 @@
     <Folder Include="Mediator\" />
     <Folder Include="Tests\" />
     <Folder Include="Confs\" />
+    <Folder Include="Libs\JsonMaker\" />
+    <Folder Include="Libs\JsonMaker\Types\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
