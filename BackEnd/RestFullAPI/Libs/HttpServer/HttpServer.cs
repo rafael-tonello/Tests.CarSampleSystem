@@ -204,14 +204,20 @@ namespace RestFullAPI
 						break;
 						case States.CALLAPP:
 
-							//cria alguns cabeçalhos que podem ser modifiados pelo app
-							response.Headers["Server"] = "SomeServer 1.0 (by Rafael Tonello)";
-	                        response.Headers["Content-Type"] = "text/html; charset=UTF-8";
-	                        response.Headers["Accept-Ranges"] = "bytes";
-	                        response.Headers["Connection"] = "Close";
-
+							
 							if (this.OnRequest != null)
 								response = this.OnRequest(request);
+
+
+                            //cria alguns cabeçalhos que podem ser modifiados pelo app
+                            if (!response.Headers.ContainsKey("Server"))
+                                response.Headers["Server"] = "SomeServer 1.0 (by Rafael Tonello)";
+                            if (!response.Headers.ContainsKey("Content-Type"))
+                                response.Headers["Content-Type"] = "text/html; charset=UTF-8";
+                            if (!response.Headers.ContainsKey("Accept-Ranges"))
+                                response.Headers["Accept-Ranges"] = "bytes";
+                            if (!response.Headers.ContainsKey("Connection"))
+                                response.Headers["Connection"] = "Close";
 
 							//envia a resposta para o browser
 							response.Headers["Content-Length"] = response.Body.Length.ToString();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RestFullAPI
@@ -8,7 +9,7 @@ namespace RestFullAPI
 	//enum com todas as configurações que podem ser utilizadas no sistema.
 	//Esta parte do sistema não é facilmente desaclopável. É uma parte
 	//específicia para este aplicativo
-	public enum Confs{ API_HTTP_PORT }
+	public enum Confs{ API_HTTP_PORT, MONGODB_HOST, MONGODB_PORT, MONGODB_CARS_COLLECTION_NAME }
 
 
 	//O sistema de configurações notifica o sistema sobre alterações nas configurações.
@@ -58,10 +59,11 @@ namespace RestFullAPI
 		}
 
 
-		//A função abaixo monitora o arquivo de configuração do sistema e identifica
-		//qualquer alteração de valores.
-		private void FileMonitor (ThreadHelper sender)
-		{
+        //A função abaixo monitora o arquivo de configuração do sistema e identifica
+        //qualquer alteração de valores.
+        private void FileMonitor(ThreadHelper sender)
+        {
+            waitOne();
             string name;
             VariantVar value = new VariantVar();
             DateTime fileWriteTime = File.GetLastWriteTime(filename);
@@ -73,20 +75,24 @@ namespace RestFullAPI
                 //em "confsBuffer" e notifica os observadores.
 
                 string[] lines = File.ReadAllLines(filename);
-                Parallel.ForEach(lines, delegate(string currLine){
+                for (int cont = 0; cont < lines.Length; cont++)
+                {
+                    string currLine = lines[cont];
                     //verifica se é uma linha de configuração válida
                     if (currLine.Contains("="))
-                    {  
+                    {
                         //pega o nome da variável
                         name = currLine.Substring(0, currLine.IndexOf("="));
 
                         //pega o valor da variável
-                        value.AsString = currLine.Substring(currLine.IndexOf("=")+1);
+                        value.AsString = currLine.Substring(currLine.IndexOf("=") + 1);
 
                         //verifica se houve alteração da variável
 
                         if (!confsBuffer.ContainsKey(name))
+                        {
                             confsBuffer.Add(name, new VariantVar("--invalid--value--"));
+                        }
 
                         if (confsBuffer[name].AsString != value.AsString)
                         {
@@ -96,18 +102,25 @@ namespace RestFullAPI
                                 OnChange.Invoke((Confs)Enum.Parse(typeof(Confs), name), value);
                         }
                     }
-                });
-
-                confsBufferTime = fileWriteTime;
+                }
             }
-		}
+        }
 
         private void CreateDefaultFile()
         {
             string file =   "#Arquivo de configuração do sistema com API Restful\r\n"+
                             "\r\n" +
                             "#Porta em que o servidor HTTP deverá escutar\r\n" +
-                            "API_HTTP_PORT=8001";
+                            "API_HTTP_PORT=8001\r\n" +
+                            "\r\n"+
+                            "#Porta em que o servidor HTTP deverá escutar\r\n" +
+                            "MONGODB_HOST=127.0.0.1\r\n"+
+                            "\r\n" +
+                            "#Porta em que o servidor HTTP deverá escutar\r\n" +
+                            "MONGODB_PORT=\r\n"+
+                            "\r\n" +
+                            "#Porta em que o servidor HTTP deverá escutar\r\n" +
+                            "MONGODB_CARS_COLLECTION_NAME=\r\n";
 
             File.WriteAllText(filename, file);
 
@@ -117,7 +130,7 @@ namespace RestFullAPI
 
 		//Lista de observadores da classe (note que o sistema de observação não feito
 		//com classes, mas sim com um Delegate, ou seja, ponteiro de função)
-		public event OnConfChangeDelegate OnChange; 
+		private event OnConfChangeDelegate OnChange; 
         public static ConfsCtrl Instance{
 			get{ return instance; }
 		}
@@ -131,10 +144,36 @@ namespace RestFullAPI
 		//
 		//Este método irá executar o callback passado em OnChange para cada configuração
 		//do sistema
-		public void RefreshOne(OnConfChangeDelegate OnChange)
+		public void RefreshOne(OnConfChangeDelegate _OnChange)
 		{
+            waitOne();
+            Parallel.ForEach(confsBuffer, delegate(KeyValuePair<string, VariantVar> curr){
+                _OnChange((Confs)Enum.Parse(typeof(Confs), curr.Key), curr.Value);
+            });
+            releaseOne();
 
 		}
+
+        public void ObservateChanges(OnConfChangeDelegate _OnChange)
+        {
+            this.OnChange += _OnChange;
+        }
+
+
+        private int waiting = 1;
+        private void waitOne()
+        {
+            while (waiting == 0){Thread.Sleep(1);}
+
+            waiting--;
+            return;
+        }
+
+        private void releaseOne()
+        {
+            waiting++;
+            return;
+        }
 
 
 	}

@@ -20,7 +20,7 @@ namespace RestFullAPI
     {
         public tester()
         {
-            ConfsCtrl.Instance.OnChange += this.confChanged;
+            ConfsCtrl.Instance.ObservateChanges(this.confChanged);
             ConfsCtrl.Instance.RefreshOne(this.confChanged);
 
         }

@@ -5,6 +5,12 @@ namespace RestFullAPI.DAO
     {
         public DAOCtrl()
         {
+            ConfsCtrl.Instance.ObservateChanges(OnConfsChange);
+        }
+
+        private void OnConfsChange(Confs conf, VariantVar var)
+        {
+            
         }
     }
 }
