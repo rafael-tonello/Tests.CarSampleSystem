@@ -86,8 +86,15 @@
     <Folder Include="Confs\" />
     <Folder Include="Libs\JsonMaker\" />
     <Folder Include="Libs\JsonMaker\Types\" />
+    <Folder Include="Html\" />
+    <Folder Include="Html\js\" />
+    <Folder Include="Html\resources\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Html\index.html" />
+    <None Include="Html\css.css" />
+    <None Include="Html\js\InputAutomation.js" />
+    <None Include="Html\resources\icon.png" />
   </ItemGroup>
 </Project>
